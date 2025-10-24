@@ -423,5 +423,145 @@ if(document.getElementById('rac_pct_top')) document.getElementById('rac_pct_top'
 document.getElementById('reset').addEventListener('click', loadDefaults);
 document.addEventListener('DOMContentLoaded', loadDefaults);
 </script>
+
+<div id="cee_details" class="hidden" style="border:1px solid #e5e7eb;border-radius:16px;padding:14px 16px;margin:14px 0;background:#f8fafc">
+  <h3>📊 Détails CEE</h3>
+  <div class="row"><span class="label">Zone</span> <span class="value" id="d_zone">—</span></div>
+  <div class="row"><span class="label">Superficie</span> <span class="value" id="d_surface">—</span></div>
+  <div class="row"><span class="label">ETAS</span> <span class="value" id="d_etas">—</span></div>
+  <div class="row"><span class="label">Scénario</span> <span class="value" id="d_scenario">—</span></div>
+  <div class="row"><span class="label">kWh CUMAC (scénario)</span> <span class="value" id="d_cumac">0</span></div>
+  <div class="row"><span class="label">Prix CUMAC (€/MWh)</span> <span class="value" id="d_prix">0,00</span></div>
+  <div class="row"><span class="label">CEE (€)</span> <span class="value" id="d_cee">0,00</span></div>
+  <div class="small" style="font-size:12px;color:#64748b;margin-top:6px">CEE = (kWh cumac ÷ 1000) × prix (€/MWh)</div>
+</div>
+
+
+<script>
+(function(){
+  window.CUMAC_RANGES = {
+    "111_140": {
+      H1:{ PAC:[238500,333900,477000,524700,763200], ELEC:[238500,333900,477000,524700,763200], THERMO:[254100,349500,492600,540300,778800], SSC:[769200,769200,769200,769200,769200] },
+      H2:{ PAC:[198750,278250,397500,437250,636000], ELEC:[198750,278250,397500,437250,636000], THERMO:[214350,293850,413100,452850,651600], SSC:[769200,769200,769200,769200,769200] },
+      H3:{ PAC:[139125,194775,278250,306075,445200], ELEC:[139125,194775,278250,306075,445200], THERMO:[154725,210375,293850,321675,460800], SSC:[769200,769200,769200,769200,769200] }
+    },
+    "140_170": {
+      H1:{ PAC:[274800,384720,549600,604560,879360], ELEC:[274800,384720,549600,604560,879360], THERMO:[290400,400320,565200,620160,894960], SSC:[769200,769200,769200,769200,769200] },
+      H2:{ PAC:[229000,320600,458000,503800,732800], ELEC:[229000,320600,458000,503800,732800], THERMO:[244600,336200,473600,519400,748400], SSC:[769200,769200,769200,769200,769200] },
+      H3:{ PAC:[160300,224420,320600,352660,512960], ELEC:[160300,224420,320600,352660,512960], THERMO:[175900,240020,336200,368260,528560], SSC:[769200,769200,769200,769200,769200] }
+    }
+  };
+  const $=id=>document.getElementById(id);
+  const fr=n=> (typeof n==='number'&&isFinite(n))? n.toLocaleString('fr-FR'):'0';
+  function etasRange(){
+    const el=$('etas'); if(!el) return null;
+    const raw=((el.options?.[el.selectedIndex]?.text||'')+' '+(el.value||'')).toString().replace(/\s/g,'').toUpperCase();
+    if(/111/.test(raw)&&/140/.test(raw)) return "111_140";
+    if(/140/.test(raw)&&/170/.test(raw)) return "140_170";
+    return null;
+  }
+  function zoneKey(){const v=($('zone')?.value||'H1').toUpperCase(); if(v.includes('H3')) return 'H3'; if(v.includes('H2')) return 'H2'; return 'H1';}
+  function surfIdx(){const s=$('surface'); let i=s?.selectedIndex ?? 4; if(i<0) i=0; if(i>4) i=4; return i;}
+  function scenarioKeySingle(){
+    const el=$('scenario'); const txt=(el?.options?.[el.selectedIndex]?.text||el?.value||'').toUpperCase();
+    if(/ELECT|ÉLECT/.test(txt)) return 'ELEC';
+    if(/THERMO/.test(txt)) return 'THERMO';
+    if(/SSC/.test(txt)) return 'SSC';
+    return 'PAC';
+  }
+  function currentCumacPrice(){
+    const inp=$('prix_cumac');
+    if(inp){ const v=parseFloat(String(inp.value).replace(',','.')); if(!isNaN(v)&&v>0) return v; }
+    const f=($('foyer')?.value||'BLEU').toUpperCase();
+    return (f==='BLEU')?11.78:7.00;
+  }
+  function computeCumacSingle(){
+    const r=etasRange(); if(!r) return 0;
+    const tbl=window.CUMAC_RANGES[r]?.[zoneKey()]; if(!tbl) return 0;
+    const key=scenarioKeySingle(); return tbl[key]?.[surfIdx()]||0;
+  }
+  window.computeCumacSingle = computeCumacSingle;
+  function updateCEE_withNewTables(){
+    const cum=computeCumacSingle();
+    const price=currentCumacPrice();
+    const ceeInput=$('cee');
+    if(ceeInput && cum>0) ceeInput.value = Math.round((cum/1000)*price);
+    const card = $('cee_details');
+    if(card){
+      const zSel=$('zone'), sSel=$('surface'), eSel=$('etas'), scSel=$('scenario');
+      const set=(id,val)=>{ const e=$(id); if(e) e.textContent = (typeof val==='number')? fr(val):val; };
+      const r=etasRange();
+      if(r){
+        card.classList.remove('hidden');
+        set('d_zone', zSel?.options?.[zSel.selectedIndex]?.text || zSel?.value || '—');
+        set('d_surface', sSel?.options?.[sSel.selectedIndex]?.text || '—');
+        set('d_etas', eSel?.options?.[eSel.selectedIndex]?.text || '—');
+        set('d_scenario', scSel?.options?.[scSel.selectedIndex]?.text || scSel?.value || '—');
+        set('d_cumac', cum);
+        set('d_prix', currentCumacPrice().toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}));
+        set('d_cee', Math.round((cum/1000)*price));
+      } else { card.classList.add('hidden'); }
+    }
+    // note under CEE tile
+    try{
+      var note=document.getElementById('cee_tile_cumac');
+      var target=document.getElementById('cee_box')||document.querySelector('[data-cee-display]')||null;
+      if(!note && target){
+        note=document.createElement('div');
+        note.id='cee_tile_cumac'; note.style.fontSize='12px'; note.style.color='#4b5563'; note.style.marginTop='4px';
+        target.parentNode.appendChild(note);
+      }
+      if(note){ note.textContent = etasRange()? ('(kWh cumac : '+fr(cum)+')') : ''; }
+    }catch(e){}
+    if(typeof window.recalc==='function') window.recalc();
+  }
+  window.updateCEE_withNewTables = updateCEE_withNewTables;
+  function boot(){
+    ['etas','zone','surface','scenario','foyer','prix_cumac'].forEach(function(id){
+      const el=$(id); if(el && !el.__cee_newtab){
+        el.addEventListener('change', updateCEE_withNewTables);
+        el.addEventListener('input', updateCEE_withNewTables);
+        el.__cee_newtab = true;
+      }
+    });
+    updateCEE_withNewTables();
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot); } else { boot(); }
+  if(typeof window.recalc==='function' && !window.__cee_newtab_wrap){
+    const __r=window.recalc; window.recalc=function(){ __r(); try{ updateCEE_withNewTables(); }catch(e){} };
+    window.__cee_newtab_wrap=true;
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  function defaultCumacPrice(){
+    const f = ($('foyer')?.value || 'BLEU').toUpperCase();
+    return f==='BLEU'? 11.78 : 7.00;
+  }
+  function applyDefaultCumacPriceIfEmpty(){
+    const inp = $('prix_cumac');
+    if(!inp) return;
+    const val = parseFloat(String(inp.value).replace(',','.'));
+    if(!(val>0)) inp.value = defaultCumacPrice().toFixed(2);
+  }
+  // On load and on foyer/scenario change, keep default if empty
+  function bootCumacPrice(){
+    applyDefaultCumacPriceIfEmpty();
+    ['foyer','scenario'].forEach(id=>{
+      const el=$(id);
+      if(el && !el.__cumacprice){
+        el.addEventListener('change', applyDefaultCumacPriceIfEmpty);
+        el.__cumacprice=true;
+      }
+    });
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', bootCumacPrice); } else { bootCumacPrice(); }
+})();
+</script>
+
 </body>
 </html>
