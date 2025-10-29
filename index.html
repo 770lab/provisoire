@@ -1,11 +1,707 @@
-Voir l'artifact "Simulateur PAC - Design Amélioré" pour le code HTML complet.
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur Aides PAC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-Pour récupérer le fichier :
-1. Clique sur les 3 points (...) en haut à droite de l'artifact du simulateur
-2. Sélectionne "View code" ou "Copy code"
-3. Copie tout le contenu
-4. Crée un fichier index.html
-5. Colle le code dedans
-6. Upload sur ton GitHub
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            line-height: 1.6;
+        }
 
-Le fichier est prêt à être utilisé tel quel !
+        .header {
+            background: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .lock-btn {
+            background: #f5f5f7;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lock-btn:hover {
+            background: #e8e8ed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 16px;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 12px;
+            background: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background: #0077ed;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 28px;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #1d1d1f;
+        }
+
+        .form-group small {
+            display: block;
+            font-size: 12px;
+            color: #86868b;
+            margin-top: 4px;
+        }
+
+        select, input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #0071e3;
+            box-shadow: 0 0 0 4px rgba(0,113,227,0.1);
+        }
+
+        .fournisseur-only {
+            display: none;
+        }
+
+        .fournisseur-mode .fournisseur-only {
+            display: block;
+        }
+
+        .results-sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+
+        .summary-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .scenario-label {
+            font-size: 13px;
+            color: #1d1d1f;
+            margin-bottom: 20px;
+            padding: 14px;
+            background: #f5f5f7;
+            border-radius: 8px;
+            border-left: 4px solid #0071e3;
+            line-height: 1.5;
+        }
+        
+        .scenario-label strong {
+            font-weight: 600;
+        }
+        
+        .scenario-label .separator {
+            color: #86868b;
+            margin: 0 8px;
+        }
+        
+        .color-bleu { color: #0071e3; }
+        .color-jaune { color: #fbbf24; }
+        .color-violet { color: #8b5cf6; }
+        .color-rose { color: #ec4899; }
+
+        .amount-row {
+            margin-bottom: 16px;
+        }
+
+        .amount-label {
+            font-size: 12px;
+            color: #86868b;
+            margin-bottom: 4px;
+        }
+
+        .amount-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .amount-value.highlight {
+            color: #34c759;
+        }
+
+        .rac-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+
+        .rac-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .rac-item input {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1d1d1f;
+            text-align: center;
+            padding: 8px 10px;
+        }
+
+        .final-amount {
+            text-align: right;
+            padding-top: 20px;
+            border-top: 2px solid #f5f5f7;
+        }
+
+        .final-amount .amount-label {
+            font-size: 13px;
+            color: #86868b;
+            margin-bottom: 6px;
+        }
+
+        .final-amount .amount-value {
+            font-size: 34px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 16px 32px;
+            font-weight: 700;
+            font-size: 18px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            margin-top: 24px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .status-badge.ok {
+            background: #d1f4e0;
+            color: #0d7f3f;
+        }
+
+        .status-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .btn-reset {
+            background: #f5f5f7;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-reset:hover {
+            background: #e8e8ed;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #86868b;
+            font-size: 13px;
+        }
+
+        @media print {
+            .header, .lock-btn, .btn-reset, .footer, .parameters-section, .main-content {
+                display: none !important;
+            }
+            
+            #printArea {
+                display: block !important;
+            }
+
+            body {
+                background: white;
+            }
+
+            @page {
+                margin: 15mm;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .results-sidebar {
+                position: static;
+            }
+        }
+
+        .note-small {
+            font-size: 11px;
+            color: #86868b;
+            text-align: center;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                        🏠 LES ARTISANS VERTS
+                    </div>
+                    <h1 style="margin: 0; font-size: 22px;">Simulateur Aides PAC</h1>
+                </div>
+                <button class="lock-btn" id="lockBtn">
+                    <span id="lockIcon">🔒</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <h2>Accès Vue fournisseur</h2>
+            <input type="password" id="passwordInput" placeholder="Mot de passe">
+            <button id="unlockBtn">Déverrouiller</button>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="parameters-section">
+            <div class="card">
+                <h2 class="card-title">Informations Client</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                    <div>
+                        <label>Nom</label>
+                        <input type="text" id="nom" placeholder="Nom du client" oninput="checkExport()">
+                    </div>
+                    <div>
+                        <label>Prénom</label>
+                        <input type="text" id="prenom" placeholder="Prénom du client" oninput="checkExport()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Paramètres</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="scenario">Scénario</label>
+                        <select id="scenario" onchange="calc()">
+                            <option value="PAC">PAC</option>
+                            <option value="PAC + BALLON ÉLECTRIQUE">PAC + BALLON ÉLECTRIQUE</option>
+                            <option value="PAC + BALLON THERMO">PAC + BALLON THERMO</option>
+                            <option value="PAC + SSC">PAC + SSC</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="categorie">Catégorie MPR</label>
+                        <select id="categorie" onchange="calc()">
+                            <option value="BLEU">MPR Bleu</option>
+                            <option value="JAUNE">MPR Jaune</option>
+                            <option value="VIOLET">MPR Violet</option>
+                            <option value="ROSE">MPR Rose</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="zone">Zone climatique</label>
+                        <select id="zone" onchange="calc()">
+                            <option value="H1">H1</option>
+                            <option value="H2">H2</option>
+                            <option value="H3">H3</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="etas">Plage d'ETAS</label>
+                        <select id="etas" onchange="calc()">
+                            <option value="111-140">111 < ETAS < 140</option>
+                            <option value="140-170" selected>140 < ETAS < 170</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
+                        <label for="surface">Surface S (m²)</label>
+                        <select id="surface" onchange="calc()">
+                            <option value="S<70">S < 70 m²</option>
+                            <option value="70<S<90">70–90 m²</option>
+                            <option value="90<S<110" selected>90–110 m²</option>
+                            <option value="110<S<130">110–130 m²</option>
+                            <option value="S>130">> 130 m²</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-reset" onclick="reset()" style="margin-top: 12px;">Réinitialiser</button>
+            </div>
+
+            <div class="card fournisseur-only">
+                <h2 class="card-title">Coûts (Vue Fournisseur)</h2>
+                
+                <div class="form-group">
+                    <label for="prixCumac">Prix cumac (€/MWhcumac)</label>
+                    <input type="number" id="prixCumac" value="11.78" step="0.01" oninput="calc()">
+                    <small>
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" id="lockPrice" checked onchange="calc()"> Verrouiller (auto selon délégataire)
+                        </label>
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>Délégataire</label>
+                    <input type="text" id="delegataire" value="" readonly style="background: #f5f5f7; color: #1d1d1f;">
+                </div>
+
+                <div class="form-group">
+                    <label>kWh cumac</label>
+                    <input type="text" id="kwhCumac" value="" readonly style="background: #f5f5f7; color: #1d1d1f; font-weight: 600;">
+                </div>
+            </div>
+        </div>
+
+        <div class="results-sidebar">
+            <div class="summary-card" style="margin-bottom: 0;">
+                <h2 class="summary-header">Résumé</h2>
+                <div class="scenario-label" id="scenarioSummary">—</div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <!-- Colonne gauche : résumé des montants -->
+                    <div>
+                        <div class="amount-row">
+                            <div class="amount-label">TOTAL TTC</div>
+                            <div class="amount-value" id="totalTTC">—</div>
+                        </div>
+
+                        <div class="amount-row fournisseur-only">
+                            <div class="amount-label">COÛT HT</div>
+                            <div class="amount-value" id="displayCoutHT">—</div>
+                            <small style="font-size: 11px; color: #86868b;">Coût matériel + pose + admin</small>
+                        </div>
+
+                        <div class="amount-row">
+                            <div class="amount-label">AIDES MPR</div>
+                            <div class="amount-value" id="aidesMPR">—</div>
+                        </div>
+
+                        <div class="amount-row">
+                            <div class="amount-label">AIDES CEE</div>
+                            <div class="amount-value" id="aidesCEE">—</div>
+                        </div>
+
+                        <div class="amount-row">
+                            <div class="amount-label">TOTAL DES AIDES</div>
+                            <div class="amount-value highlight" id="totalAides">—</div>
+                        </div>
+
+                        <div class="amount-row">
+                            <div class="amount-label">RESTE À CHARGE</div>
+                            <div class="amount-value" id="resteCharge">—</div>
+                        </div>
+
+                        <div class="amount-row fournisseur-only">
+                            <div class="amount-label">MARGE FINALE (HT)</div>
+                            <div class="amount-value" id="margeFinal">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Colonne droite : prise en charge du RAC -->
+                    <div>
+                        <h2 class="summary-header" style="margin-bottom: 12px;">Prise en charge du RAC</h2>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <div class="amount-label">Pourcentage (%)</div>
+                            <input type="number" id="racPourcent" value="0" min="0" max="100" step="1" oninput="updatePct()" style="font-size: 24px; font-weight: 700; text-align: center; padding: 10px;">
+                        </div>
+                        
+                        <div style="margin-bottom: 16px;">
+                            <div class="amount-label">RAC offert (€)</div>
+                            <input type="number" id="racOffert" value="0" min="0" step="1" oninput="updateAmt()" style="font-size: 24px; font-weight: 700; text-align: center; padding: 10px;">
+                        </div>
+                        
+                        <div class="note-small fournisseur-only" style="margin-bottom: 16px;">Appliqué sur le RAC brut. N'affecte pas le prix cumac.</div>
+
+                        <div class="status-badge ok" id="statusBadge" style="margin-bottom: 12px;">DOSSIER OK</div>
+                        
+                        <button id="exportBtn" disabled style="width: 100%; background: #0071e3; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: not-allowed; opacity: 0.5; transition: all 0.2s; margin-bottom: 8px;">
+                            📄 Exporter en PDF
+                        </button>
+                        
+                        <button id="whatsappBtn" disabled style="width: 100%; background: #25D366; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: not-allowed; opacity: 0.5; transition: all 0.2s;">
+                            💬 Demander un devis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p style="margin-top: 16px;">Propulsé par 770 Lab</p>
+    </div>
+
+    <!-- Zone d'impression cachée -->
+    <div id="printArea" style="display: none;">
+        <div style="padding: 40px; font-family: -apple-system, sans-serif;">
+            <h1 style="font-size: 28px; margin-bottom: 10px;" id="printTitle">Dossier —</h1>
+            <p style="color: #6b7280; margin-bottom: 30px;" id="printDate"></p>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <h2 style="font-size: 14px; color: #6b7280; text-transform: uppercase; margin-bottom: 15px;">Résumé</h2>
+                <p style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;" id="printScenario"></p>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #6b7280;">TOTAL TTC</div>
+                    <div style="font-size: 28px; font-weight: 700;" id="printTTC"></div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #6b7280;">AIDES MPR</div>
+                    <div style="font-size: 28px; font-weight: 700;" id="printMPR"></div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #6b7280;">AIDES CEE</div>
+                    <div style="font-size: 28px; font-weight: 700;" id="printCEE"></div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #6b7280;">TOTAL DES AIDES</div>
+                    <div style="font-size: 28px; font-weight: 700; color: #34c759;" id="printTotalAides"></div>
+                </div>
+            </div>
+            
+            <div style="background: #f9fafb; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <h2 style="font-size: 14px; color: #6b7280; text-transform: uppercase; margin-bottom: 15px;">Prise en charge du RAC</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 12px; color: #6b7280;">Pourcentage (%)</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="printPct"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: #6b7280;">RAC offert (€)</div>
+                        <div style="font-size: 24px; font-weight: 700;" id="printOffert"></div>
+                    </div>
+                </div>
+                
+                <div style="padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: right;">
+                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">RESTE À CHARGE</div>
+                    <div style="font-size: 36px; font-weight: 700;" id="printRAC"></div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 16px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 18px;" id="printStatus"></div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; color: #6b7280; font-size: 12px;">
+                Propulsé par 770 Lab
+            </div>
+        </div>
+    </div>
+
+<script>
+const D={TTC:{"PAC":10890,"PAC + BALLON ÉLECTRIQUE":13750,"PAC + BALLON THERMO":13750,"PAC + SSC":25850},MPR:{"PAC":{BLEU:5000,JAUNE:4000,VIOLET:3000,ROSE:0},"PAC + BALLON ÉLECTRIQUE":{BLEU:5000,JAUNE:4000,VIOLET:3000,ROSE:0},"PAC + BALLON THERMO":{BLEU:6200,JAUNE:4800,VIOLET:3400,ROSE:0},"PAC + SSC":{BLEU:15000,JAUNE:12000,VIOLET:7000,ROSE:0}},COUT:{"PAC":6200,"PAC + BALLON ÉLECTRIQUE":6400,"PAC + BALLON THERMO":7300,"PAC + SSC":11700},CEE:{"140-170":{H1:{PAC:{"S<70":274800,"70<S<90":384720,"90<S<110":549600,"110<S<130":604560,"S>130":879360},"BALLON ELECTRIQUE":{"S<70":274800,"70<S<90":384720,"90<S<110":549600,"110<S<130":604560,"S>130":879360},"BALLON THERMO":{"S<70":290400,"70<S<90":400320,"90<S<110":565200,"110<S<130":620160,"S>130":894960},"BALLON SSC":{"S<70":769200,"70<S<90":769200,"90<S<110":769200,"110<S<130":769200,"S>130":769200}},H2:{PAC:{"S<70":229000,"70<S<90":320600,"90<S<110":458000,"110<S<130":503800,"S>130":732800},"BALLON ELECTRIQUE":{"S<70":229000,"70<S<90":320600,"90<S<110":458000,"110<S<130":503800,"S>130":732800},"BALLON THERMO":{"S<70":244600,"70<S<90":336200,"90<S<110":473600,"110<S<130":519400,"S>130":748400},"BALLON SSC":{"S<70":769200,"70<S<90":769200,"90<S<110":769200,"110<S<130":769200,"S>130":769200}},H3:{PAC:{"S<70":160300,"70<S<90":224420,"90<S<110":320600,"110<S<130":352660,"S>130":512960},"BALLON ELECTRIQUE":{"S<70":160300,"70<S<90":224420,"90<S<110":320600,"110<S<130":352660,"S>130":512960},"BALLON THERMO":{"S<70":175900,"70<S<90":240020,"90<S<110":336200,"110<S<130":368260,"S>130":528560},"BALLON SSC":{"S<70":769200,"70<S<90":769200,"90<S<110":769200,"110<S<130":769200,"S>130":769200}}},"111-140":{H1:{PAC:{"S<70":238500,"70<S<90":333900,"90<S<110":477000,"110<S<130":524700,"S>130":763200},"BALLON ELECTRIQUE":{"S<70":238500,"70<S<90":333900,"90<S<110":477000,"110<S<130":524700,"S>130":763200},"BALLON THERMO":{"S<70":254100,"70<S<90":349500,"90<S<110":492600,"110<S<130":540300,"S>130":778800},"BALLON SSC":{"S<70":769200,"70<S<90":769200,"90<S<110":769200,"110<S<130":769200,"S>130":769200}},H2:{PAC:{"S<70":198750,"70<S<90":278250,"90<S<110":397500,"110<S<130":437250,"S>130":636000},"BALLON ELECTRIQUE":{"S<70":198750,"70<S<90":278250,"90<S<110":397500,"110<S<130":437250,"S>130":636000},"BALLON THERMO":{"S<70":214350,"70<S<90":293850,"90<S<110":413100,"110<S<130":452850,"S>130":651600},"BALLON SSC":{"S<70":769200,"70<S<90":769200,"90<S<110":769200,"110<S<130":769200,"S>130":769200}},H3:{PAC:{"S<70":139125,"70<S<90":194775,"90<S<110":278250,"110<S<130":306075,"S>130":445200},"BALLON ELECTRIQUE":{"S<70":139125,"70<S<90":194775,"90<S<110":278250,"110<S<130":306075,"S>130":445200},"BALLON THERMO":{"S<70":154725,"70<S<90":210375,"90<S<110":293850,"110<S<130":321675,"S>130":460800}}}}};
+const M={"PAC":"PAC","PAC + BALLON ÉLECTRIQUE":"BALLON ELECTRIQUE","PAC + BALLON THERMO":"BALLON THERMO","PAC + SSC":"BALLON SSC"};
+let mode=0;
+function deleg(s,c){return(s==='S>130'&&c!=='BALLON SSC')?'ECO NEGOCE':'VALOREN'}
+function prix(d,c){const b=c==='BLEU';return d==='ECO NEGOCE'?(b?12.5:7.4):(b?11.78:7.0)}
+function prixC(d){return d==='ECO NEGOCE'?6.5:7.0}
+function fmt(n){return Math.round(n).toLocaleString('fr-FR')+' €'}
+function calc(){const sc=document.getElementById('scenario').value;const ct=document.getElementById('categorie').value;const zn=document.getElementById('zone').value;const et=document.getElementById('etas').value;const sf=document.getElementById('surface').value;const cs=M[sc];const tt=D.TTC[sc]||0;const ad=(D.MPR[sc]&&D.MPR[sc][ct])?D.MPR[sc][ct]:0;const ch=D.COUT[sc]||0;const dg=deleg(sf,cs);const kw=D.CEE[et][zn][cs][sf];console.log('Mode:',mode,'kWh:',kw,'Delegataire:',dg);let px,ce;if(mode){const lk=document.getElementById('lockPrice').checked;if(lk){px=prix(dg,ct);document.getElementById('prixCumac').value=px.toFixed(2)}else{px=parseFloat(document.getElementById('prixCumac').value)||0}ce=kw*px/1000;console.log('Setting kwhCumac to:',Math.round(kw).toLocaleString('fr-FR'));document.getElementById('delegataire').value=dg;document.getElementById('kwhCumac').value=Math.round(kw).toLocaleString('fr-FR')}else{px=prixC(dg);ce=kw*px/1000}const ta=ad+ce;const rb=tt-ta;document.getElementById('totalTTC').textContent=fmt(tt);document.getElementById('aidesMPR').textContent=fmt(ad);document.getElementById('aidesCEE').textContent=fmt(ce);document.getElementById('totalAides').textContent=fmt(ta);if(mode)document.getElementById('displayCoutHT').textContent=fmt(ch);const st=document.getElementById('scenario').options[document.getElementById('scenario').selectedIndex].text;const ct2=document.getElementById('categorie').options[document.getElementById('categorie').selectedIndex].text;const zn2=document.getElementById('zone').options[document.getElementById('zone').selectedIndex].text;const et2=document.getElementById('etas').options[document.getElementById('etas').selectedIndex].text;const sf2=document.getElementById('surface').options[document.getElementById('surface').selectedIndex].text;const colorClass=ct==='BLEU'?'color-bleu':(ct==='JAUNE'?'color-jaune':(ct==='VIOLET'?'color-violet':'color-rose'));const borderColor=ct==='BLEU'?'#0071e3':(ct==='JAUNE'?'#fbbf24':(ct==='VIOLET'?'#8b5cf6':'#ec4899'));document.getElementById('scenarioSummary').innerHTML=`<strong class="${colorClass}">${st}</strong><span class="separator">•</span>${ct2}<span class="separator">•</span>Zone ${zn2}<span class="separator">•</span>${sf2}<span class="separator">•</span>${et2}`;document.getElementById('scenarioSummary').style.borderLeftColor=borderColor;calcRAC(rb,ch,ta)}
+function calcRAC(rb,ch,ta){const po=parseFloat(document.getElementById('racPourcent').value)||0;const mo=parseFloat(document.getElementById('racOffert').value)||0;const rc=rb-mo;document.getElementById('resteCharge').textContent=fmt(rc);const vh=Math.max(0,rc)/1.055;const mg=vh-ch+ta;if(mode)document.getElementById('margeFinal').textContent=fmt(mg);const bd=document.getElementById('statusBadge');if(mg>=4000){bd.className='status-badge ok';bd.textContent='DOSSIER OK'}else if(mg>=2000){bd.className='status-badge warning';bd.textContent='DOSSIER À AMÉLIORER'}else{bd.className='status-badge danger';bd.textContent='DOSSIER KO'}}
+function updatePct(){const sc=document.getElementById('scenario').value;const ct=document.getElementById('categorie').value;const zn=document.getElementById('zone').value;const et=document.getElementById('etas').value;const sf=document.getElementById('surface').value;const cs=M[sc];const tt=D.TTC[sc]||0;const ad=(D.MPR[sc]&&D.MPR[sc][ct])?D.MPR[sc][ct]:0;const ch=D.COUT[sc]||0;const dg=deleg(sf,cs);const kw=D.CEE[et][zn][cs][sf];let px,ce;if(mode){const lk=document.getElementById('lockPrice').checked;px=lk?prix(dg,ct):parseFloat(document.getElementById('prixCumac').value)||0;ce=kw*px/1000}else{px=prixC(dg);ce=kw*px/1000}const ta=ad+ce;const rb=tt-ta;let po=parseFloat(document.getElementById('racPourcent').value)||0;if(po>100)po=100;if(po<0)po=0;document.getElementById('racPourcent').value=Math.round(po);const mo=Math.round(rb*(po/100));document.getElementById('racOffert').value=mo;calcRAC(rb,ch,ta)}
+function updateAmt(){const sc=document.getElementById('scenario').value;const ct=document.getElementById('categorie').value;const zn=document.getElementById('zone').value;const et=document.getElementById('etas').value;const sf=document.getElementById('surface').value;const cs=M[sc];const tt=D.TTC[sc]||0;const ad=(D.MPR[sc]&&D.MPR[sc][ct])?D.MPR[sc][ct]:0;const ch=D.COUT[sc]||0;const dg=deleg(sf,cs);const kw=D.CEE[et][zn][cs][sf];let px,ce;if(mode){const lk=document.getElementById('lockPrice').checked;px=lk?prix(dg,ct):parseFloat(document.getElementById('prixCumac').value)||0;ce=kw*px/1000}else{px=prixC(dg);ce=kw*px/1000}const ta=ad+ce;const rb=tt-ta;let mo=parseFloat(document.getElementById('racOffert').value)||0;if(mo>rb)mo=rb;if(mo<0)mo=0;document.getElementById('racOffert').value=Math.round(mo);let po=rb>0?Math.round((mo/rb)*100):0;if(po>100)po=100;if(po<0)po=0;document.getElementById('racPourcent').value=po;calcRAC(rb,ch,ta)}
+function reset(){document.getElementById('scenario').value='PAC';document.getElementById('categorie').value='BLEU';document.getElementById('zone').value='H1';document.getElementById('etas').value='140-170';document.getElementById('surface').value='90<S<110';document.getElementById('racPourcent').value=0;document.getElementById('racOffert').value=0;if(mode){document.getElementById('prixCumac').value=11.78;document.getElementById('lockPrice').checked=true}calc()}
+function checkExport(){const nom=document.getElementById('nom').value.trim();const prenom=document.getElementById('prenom').value.trim();const btn=document.getElementById('exportBtn');const wBtn=document.getElementById('whatsappBtn');if(nom&&prenom){btn.disabled=false;btn.style.cursor='pointer';btn.style.opacity='1';wBtn.disabled=false;wBtn.style.cursor='pointer';wBtn.style.opacity='1'}else{btn.disabled=true;btn.style.cursor='not-allowed';btn.style.opacity='0.5';wBtn.disabled=true;wBtn.style.cursor='not-allowed';wBtn.style.opacity='0.5'}}
+function sendWhatsApp(){const nom=document.getElementById('nom').value.trim();const prenom=document.getElementById('prenom').value.trim();if(!nom||!prenom){alert('Veuillez renseigner le nom et le prénom du client');return}const scenario=document.getElementById('scenario').options[document.getElementById('scenario').selectedIndex].text;const categorie=document.getElementById('categorie').options[document.getElementById('categorie').selectedIndex].text;const zone=document.getElementById('zone').options[document.getElementById('zone').selectedIndex].text;const etas=document.getElementById('etas').options[document.getElementById('etas').selectedIndex].text;const surface=document.getElementById('surface').options[document.getElementById('surface').selectedIndex].text;const ttc=document.getElementById('totalTTC').textContent;const aidesMPR=document.getElementById('aidesMPR').textContent;const aidesCEE=document.getElementById('aidesCEE').textContent;const totalAides=document.getElementById('totalAides').textContent;const rac=document.getElementById('resteCharge').textContent;const message=`🏠 *Demande de devis - Les Artisans Verts*%0A%0A👤 *Client :* ${prenom} ${nom}%0A%0A📋 *Configuration :*%0A• Scénario : ${scenario}%0A• ${categorie}%0A• ${zone}%0A• ${surface}%0A• ${etas}%0A%0A💰 *Montants :*%0A• Total TTC : ${ttc}%0A• Aides MPR : ${aidesMPR}%0A• Aides CEE : ${aidesCEE}%0A• Total aides : ${totalAides}%0A• Reste à charge : ${rac}%0A%0AJe souhaite obtenir un devis détaillé.`;window.open(`https://wa.me/?text=${message}`, '_blank')}
+function exportPDF(){
+    const nom=document.getElementById('nom').value.trim();
+    const prenom=document.getElementById('prenom').value.trim();
+    console.log('Export PDF clicked!',nom,prenom);
+    
+    if(!nom||!prenom){
+        alert('Veuillez renseigner le nom et le prénom du client');
+        return;
+    }
+    
+    // Remplir la zone d'impression
+    document.getElementById('printTitle').textContent=`Dossier — ${prenom} ${nom}`;
+    document.getElementById('printDate').textContent=`Date: ${new Date().toLocaleDateString('fr-FR')}`;
+    document.getElementById('printScenario').textContent=document.getElementById('scenarioSummary').textContent;
+    document.getElementById('printTTC').textContent=document.getElementById('totalTTC').textContent;
+    document.getElementById('printMPR').textContent=document.getElementById('aidesMPR').textContent;
+    document.getElementById('printCEE').textContent=document.getElementById('aidesCEE').textContent;
+    document.getElementById('printTotalAides').textContent=document.getElementById('totalAides').textContent;
+    document.getElementById('printPct').textContent=document.getElementById('racPourcent').value;
+    document.getElementById('printOffert').textContent=document.getElementById('racOffert').value+' €';
+    document.getElementById('printRAC').textContent=document.getElementById('resteCharge').textContent;
+    
+    const badge=document.getElementById('statusBadge');
+    const printStatus=document.getElementById('printStatus');
+    printStatus.textContent=badge.textContent;
+    if(badge.classList.contains('ok')){
+        printStatus.style.background='#d1f4e0';
+        printStatus.style.color='#0d7f3f';
+    }else if(badge.classList.contains('warning')){
+        printStatus.style.background='#fff3cd';
+        printStatus.style.color='#856404';
+    }else{
+        printStatus.style.background='#f8d7da';
+        printStatus.style.color='#721c24';
+    }
+    
+    console.log('Opening print dialog...');
+    window.print();
+}
+document.getElementById('lockBtn').onclick=function(){if(!mode){document.getElementById('passwordModal').classList.add('active')}else{mode=0;document.getElementById('mainContent').classList.remove('fournisseur-mode');document.getElementById('lockIcon').textContent='🔒';calc()}};
+document.getElementById('exportBtn').onclick=exportPDF;
+document.getElementById('whatsappBtn').onclick=sendWhatsApp;
+document.getElementById('unlockBtn').onclick=function(){const pw=document.getElementById('passwordInput').value;if(pw==='gamberge'||pw==='lav'){mode=1;document.getElementById('mainContent').classList.add('fournisseur-mode');document.getElementById('passwordModal').classList.remove('active');document.getElementById('passwordInput').value='';document.getElementById('lockIcon').textContent='🔓';calc()}else{alert('Mot de passe incorrect')}};
+document.getElementById('passwordModal').onclick=function(e){if(e.target.id==='passwordModal'){document.getElementById('passwordModal').classList.remove('active')}};
+calc();
+</script>
+</body>
+</html>
